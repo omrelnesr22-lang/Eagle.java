@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>EAGLE.JAVA</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg-0:#0b0f16;
+  --bg-1:#121826;
+  --bg-2:#1a2233;
+  --panel:#161e2c;
+  --line:#26314a;
+  --gold:#dba64c;
+  --gold-dim:#8a6a2e;
+  --sky:#6f9fc4;
+  --text:#eef1f0;
+  --text-dim:#93a1b8;
+  --text-faint:#5c6a83;
+  --code-bg:#0d1219;
+  --ok:#7fae6a;
+  --shadow: 0 10px 40px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(219,166,76,.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(111,159,196,.07), transparent 60%),
+    var(--bg-0);
+  color:var(--text);
+  font-family:'Tajawal', sans-serif;
+  min-height:100vh;
+}
+
+::selection{ background: rgba(219,166,76,.35); }
+
+/* ---------- App shell ---------- */
+.app{
+  display:grid;
+  grid-template-columns: 300px 1fr;
+  min-height:100vh;
+}
+@media (max-width: 860px){
+  .app{ grid-template-columns: 1fr; }
+  .sidebar{ position:static; height:auto; border-left:none; border-bottom:1px solid var(--line); }
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
+  border-left:1px solid var(--line);
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+  padding:22px 18px 30px;
+}
+.brand{
+  display:flex; align-items:center; gap:12px;
+  padding:6px 4px 18px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:18px;
+}
+.brand .eagle{
+  font-size:34px;
+  filter: drop-shadow(0 0 14px rgba(219,166,76,.45));
+  animation: soar 6s ease-in-out infinite;
+}
+@keyframes soar{
+  0%,100%{ transform: translateY(0) rotate(0deg); }
+  50%{ transform: translateY(-3px) rotate(-3deg); }
+}
+.brand-text .title{
+  font-family:'Cairo', sans-serif; font-weight:900; font-size:20px; letter-spacing:.5px;
+  color:var(--text);
+}
+.brand-text .title span{ color:var(--gold); }
+.brand-text .subtitle{
+  font-size:11.5px; color:var(--text-faint); margin-top:2px; letter-spacing:.4px;
+}
+
+.altitude{
+  margin-bottom:20px;
+}
+.altitude-label{
+  display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:6px;
+  font-family:'JetBrains Mono', monospace;
+}
+.altitude-track{
+  position:relative; height:8px; border-radius:20px; background:var(--bg-2);
+  border:1px solid var(--line); overflow:hidden;
+}
+.altitude-fill{
+  height:100%; border-radius:20px;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  transition: width .5s ease;
+}
+.altitude-marker{
+  position:absolute; top:50%; transform:translate(50%,-50%);
+  font-size:13px; transition: right .5s ease;
+}
+
+.nav-group{ margin-bottom:6px; }
+.nav-group-title{
+  font-size:11.5px; color:var(--text-faint); text-transform:uppercase;
+  letter-spacing:1px; padding:14px 10px 6px; font-family:'Cairo',sans-serif; font-weight:700;
+}
+.nav-item{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 10px; border-radius:10px; cursor:pointer;
+  color:var(--text-dim); font-size:14.5px; margin:2px 0;
+  border:1px solid transparent;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.nav-item:hover{ background: rgba(219,166,76,.06); color:var(--text); }
+.nav-item.active{
+  background: rgba(219,166,76,.1);
+  border-color: rgba(219,166,76,.35);
+  color: var(--gold);
+  font-weight:700;
+}
+.nav-item .dot{
+  width:7px; height:7px; border-radius:50%; background:var(--line); flex:none;
+  transition: background .15s ease;
+}
+.nav-item.done .dot{ background: var(--ok); box-shadow:0 0 6px rgba(127,174,106,.6); }
+.nav-item.active .dot{ background: var(--gold); }
+.nav-item .label{ flex:1; }
+.nav-item .num{
+  font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--text-faint);
+}
+
+/* ---------- Main ---------- */
+.main{ padding:34px 44px 60px; max-width:900px; }
+@media (max-width: 860px){ .main{ padding:22px 18px 50px; } }
+
+.topbar{
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:26px;
+  flex-wrap:wrap; gap:10px;
+}
+.crumb{ font-size:13px; color:var(--text-faint); font-family:'JetBrains Mono',monospace; }
+.crumb b{ color:var(--sky); font-weight:600; }
+.mark-btn{
+  border:1px solid var(--line); background:var(--panel); color:var(--text-dim);
+  padding:8px 16px; border-radius:9px; font-family:'Tajawal'; font-size:13.5px; cursor:pointer;
+  display:flex; align-items:center; gap:8px; transition: all .15s ease;
+}
+.mark-btn:hover{ border-color: var(--gold-dim); color:var(--text); }
+.mark-btn.done{ background: rgba(127,174,106,.12); border-color: rgba(127,174,106,.4); color:var(--ok); }
+
+.topic{
+  background: var(--panel);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:32px 34px 38px;
+  box-shadow: var(--shadow);
+  animation: fadeUp .35s ease;
+}
+@keyframes fadeUp{ from{ opacity:0; transform: translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+.topic h1{
+  font-family:'Cairo', sans-serif; font-weight:900; font-size:26px; margin:0 0 4px;
+  display:flex; align-items:center; gap:12px;
+}
+.topic h1 .en{ font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--text-faint); font-weight:500; }
+.topic .intro{ color:var(--text-dim); font-size:15px; line-height:2; margin:14px 0 22px; }
+
+.section{ margin:26px 0; }
+.section h2{
+  font-family:'Cairo',sans-serif; font-size:17px; color:var(--gold); font-weight:700;
+  margin:0 0 10px; padding-right:12px; border-right:3px solid var(--gold-dim);
+}
+.section p{ color:var(--text-dim); line-height:2; font-size:14.5px; margin:8px 0; }
+.section ul{ color:var(--text-dim); line-height:2; font-size:14.5px; padding-right:22px; margin:8px 0;}
+.section li{ margin:4px 0; }
+.section strong{ color:var(--text); }
+
+pre.code{
+  background: var(--code-bg);
+  border:1px solid var(--line);
+  border-right:3px solid var(--gold-dim);
+  border-radius:10px;
+  padding:16px 18px;
+  overflow-x:auto;
+  direction:ltr; text-align:left;
+  font-family:'JetBrains Mono', monospace;
+  font-size:13px; line-height:1.75; color:#d9dee8;
+  margin:10px 0 4px;
+}
+pre.code .cm{ color:#6f8299; }
+pre.code .kw{ color:#e39a5b; }
+pre.code .st{ color:#9dc37f; }
+pre.code .ty{ color:#7fb2d6; }
+pre.code .out{ color:#e6c878; }
+
+.out-label{
+  font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint);
+  margin-top:10px; letter-spacing:.5px;
+}
+.out-box{
+  background: rgba(219,166,76,.06); border:1px dashed var(--gold-dim); border-radius:8px;
+  padding:10px 14px; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--gold);
+  direction:ltr; text-align:left; margin-top:6px; white-space:pre-wrap;
+}
+
+.tip{
+  display:flex; gap:10px; background: rgba(111,159,196,.08); border:1px solid rgba(111,159,196,.25);
+  border-radius:10px; padding:12px 16px; margin-top:14px; font-size:13.5px; color:var(--text-dim); line-height:1.9;
+}
+.tip .ic{ font-size:16px; flex:none; }
+
+table.dtypes{ width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; }
+table.dtypes th, table.dtypes td{ padding:9px 12px; border-bottom:1px solid var(--line); text-align:center; }
+table.dtypes th{ color:var(--gold); font-family:'Cairo',sans-serif; font-weight:700; background:rgba(219,166,76,.05); }
+table.dtypes td{ color:var(--text-dim); }
+table.dtypes code{ color:var(--sky); font-family:'JetBrains Mono',monospace; }
+
+.footer-nav{ display:flex; justify-content:space-between; margin-top:30px; gap:12px; }
+.nav-btn{
+  flex:1; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:14px 18px; cursor:pointer; color:var(--text-dim); text-align:right;
+  transition: all .15s ease;
+}
+.nav-btn:hover{ border-color:var(--gold-dim); color:var(--text); }
+.nav-btn .arrow{ font-size:11px; color:var(--text-faint); display:block; margin-bottom:3px;}
+.nav-btn .name{ font-family:'Cairo',sans-serif; font-weight:700; font-size:14px; color:var(--gold); }
+
+/* scrollbar */
+.sidebar::-webkit-scrollbar{ width:6px; }
+.sidebar::-webkit-scrollbar-thumb{ background: var(--line); border-radius:6px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="eagle">🦅</div>
+      <div class="brand-text">
+        <div class="title">EAGLE<span>.</span><span>JAVA</span></div>
+        <div class="subtitle">مختصر كتابي — لغة جافا</div>
+      </div>
+    </div>
+
+    <div class="altitude">
+      <div class="altitude-label"><span>الارتفاع المقطوع</span><span id="altPct">0%</span></div>
+      <div class="altitude-track">
+        <div class="altitude-fill" id="altFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div id="navHost"></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="crumb" id="crumb">EAGLE.JAVA / <b>...</b></div>
+      <button class="mark-btn" id="markBtn">☐ وضع علامة "فهمتها"</button>
+    </div>
+    <div class="topic" id="topicHost"></div>
+  </main>
+</div>
+
+<script>
+/* ===================== DATA ===================== */
+const CATEGORIES = [
+  { title:"الأساسيات", items:["datatypes","mainsig","varscope"] },
+  { title:"العمليات (Operators)", items:["arithmetic","assignment","logical"] },
+  { title:"التحكم بالتدفق", items:["conditions","elseif","nestedif"] },
+  { title:"الحلقات (Loops)", items:["loops","nestedloops","breakcontinue"] },
+  { title:"المصفوفات والدوال", items:["arrays","functions"] },
+  { title:"البرمجة الكائنية (OOP)", items:["constructor","encapsulation","inheritance","polymorphism","static","carproject"] },
+];
+
+const T = {
+
+datatypes:{
+  en:"Primitive Data Types", title:"أنواع البيانات الأساسية",
+  intro:"جافا لغة ذات <strong>نوع ثابت</strong> (Statically Typed)، أي أن كل متغيّر لازم يكون له نوع بيانات محدد قبل استخدامه. النوع بيحدد حجم الذاكرة اللي هياخده المتغيّر، والمدى اللي ممكن يخزّنه.",
+  sections:[
+    {h:"boolean", p:"بيخزّن قيمة منطقية واحدة بس: <code>true</code> أو <code>false</code>. بتستخدم كشرط في <span class='ty'>if</span> و<span class='ty'>while</span> و<span class='ty'>for</span>." },
+    {h:"الأعداد الصحيحة (Integer Types)", p:"أربع أنواع بتختلف في الحجم والمدى اللي بتقدر تخزّنه:", table:[
+      ["النوع","الحجم","المدى"],
+      ["boolean","غير محدد","true أو false"],
+      ["byte","1 بايت (8 بت)","-128 إلى 127"],
+      ["short","2 بايت (16 بت)","-32,768 إلى 32,767"],
+      ["int","4 بايت (32 بت)","-2,147,483,648 إلى 2,147,483,647"],
+      ["long","8 بايت (64 بت)","-9,223,372,036,854,775,808 إلى 9,223,372,036,854,775,807"],
+      ["float","4 بايت (32 بت)","تقريبًا 7 أرقام عشرية"],
+      ["double","8 بايت (64 بت)","تقريبًا 15-16 رقم عشري"],
+      ["char","2 بايت (16 بت)","رمز حرف واحد"],
+    ]},
+    {h:"long", p:"يستخدم للأعداد الكبيرة جدًا. لازم تضيف الحرف <code>L</code> في نهاية القيمة عشان جافا تتعامل معاه كـ long.",
+      code:`long veryLargeNumber = 10000000000L;
+System.out.println(veryLargeNumber);`},
+    {h:"float و double", p:"بيُستخدموا للأعداد ذات الفاصلة العشرية. <code>double</code> هو النوع الافتراضي الأكثر دقة، أما <code>float</code> فلازم يتكتب بـ <code>F</code> في الآخر.",
+      code:`float decimalNumber = 3.14F;
+System.out.println(decimalNumber);
+
+double preciseDecimal = 3.141592653589793;
+System.out.println(preciseDecimal);`},
+    {h:"char", p:"بيخزّن حرف واحد فقط، ويُكتب بين علامتي اقتباس مفردة <code>' '</code>. جافا بتدعم ترميز Unicode، وده بيسمح بتمثيل أي حرف من أي لغة.",
+      code:`char letter = 'A';
+System.out.println(letter);`},
+  ]
+},
+
+mainsig:{
+  en:"Main Method Signature", title:"توقيع الدالة main",
+  intro:"دالة <code>main</code> هي نقطة الدخول لأي برنامج جافا. مهما كان حجم البرنامج، لازم التنفيذ يبدأ من جوّه دالة main، وأي كلاس بينفَّذ لازم يحتوي عليها.",
+  sections:[
+    {h:"التوقيع القياسي", code:`public static void main(String[] args)`},
+    {h:"شرح كل جزء", list:[
+      "<strong>public</strong>: تجعل الدالة متاحة للاستدعاء من خارج الكلاس، وهي إلزامية عشان الـ JVM يقدر يستدعيها.",
+      "<strong>static</strong>: تسمح باستدعاء الدالة دون الحاجة لإنشاء كائن (Object) من الكلاس.",
+      "<strong>void</strong>: يعني الدالة main لا تُعيد أي قيمة عند انتهاء تنفيذها.",
+      "<strong>main</strong>: اسم الدالة، ولازم يُكتب بالضبط بحروف صغيرة كما هو.",
+      "<strong>String[] args</strong>: مصفوفة تُستخدم لاستقبال متغيرات (Arguments) من سطر الأوامر عند تشغيل البرنامج.",
+    ]},
+  ]
+},
+
+varscope:{
+  en:"Variable Scope", title:"نطاق المتغيرات",
+  intro:"نطاق المتغيّر (Scope) يحدد أين يمكن الوصول إليه داخل الكود. في جافا فيه نوعين أساسيين: المتغيرات المحلية والمتغيرات على مستوى الكائن.",
+  sections:[
+    {h:"المتغيرات المحلية (Local Variables)", p:"تُعرَّف داخل دالة (Method)، أو داخل قوسين <code>{ }</code> مثل الحلقات أو الشروط. لا يمكن الوصول إليها من خارج هذا النطاق، وبمجرد انتهاء تنفيذه تنتهي حياة المتغيّر.",
+      code:`public class Main {
+  public static void main(String[] args) {
+    int x = 10; // متغيّر محلي داخل main
+    System.out.println("قيمة x: " + x);
+  }
+}`},
+    {h:"مثال على نطاق محدود داخل شرط", code:`public class Main {
+  public static void main(String[] args) {
+    if (true) {
+      int y = 20; // متغيّر محلي داخل الشرط
+      System.out.println("قيمة y: " + y);
+    }
+    // لا يمكن استخدام y هنا، خارج نطاقها
+  }
+}`},
+    {h:"المتغيرات على مستوى الكائن (Instance Variables)", p:"تُعرَّف داخل الكلاس مباشرة وليس داخل أي دالة. كل كائن (Object) يُنشأ من الكلاس يحصل على نسخة مستقلة من هذه المتغيرات، ويمكن الوصول إليها من داخل أي دالة في نفس الكلاس. إذا لم تُعطَ قيمة ابتدائية، تأخذ القيمة الافتراضية (0 للأرقام، null للنصوص).",
+      code:`class Car {
+  String brand; // متغيّر على مستوى الكائن
+
+  void setBrand(String b) {
+    brand = b;
+  }
+
+  void displayBrand() {
+    System.out.println("ماركة السيارة: " + brand);
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    Car car1 = new Car();
+    car1.setBrand("BMW");
+    car1.displayBrand(); // ماركة السيارة: BMW
+
+    Car car2 = new Car();
+    car2.setBrand("Mercedes");
+    car2.displayBrand(); // ماركة السيارة: Mercedes
+  }
+}`, out:"ماركة السيارة: BMW\nماركة السيارة: Mercedes",
+      tip:"كل كائن (car1 و car2) له نسخته الخاصة من متغيّر brand، فتغيير قيمة واحد لا يؤثر على الآخر." },
+  ]
+},
+
+arithmetic:{
+  en:"Arithmetic Operators", title:"العمليات الحسابية",
+  intro:"عوامل حسابية (Arithmetic Operators) تُستخدم في جافا لإجراء العمليات الحسابية الأساسية بين المتغيرات والقيم.",
+  sections:[
+    {h:"الجمع (+)", p:"يُستخدم لجمع رقمين أو أكثر.", code:`int a = 10;
+int b = 5;
+int sum = a + b; // النتيجة: 15
+System.out.println("الجمع: " + sum);`},
+    {h:"الطرح (-)", p:"يُستخدم لطرح رقم من آخر.", code:`int a = 10;
+int b = 5;
+int difference = a - b; // النتيجة: 5
+System.out.println("الفرق: " + difference);`},
+    {h:"الضرب (*)", p:"يُستخدم لضرب رقمين.", code:`int a = 10;
+int b = 5;
+int product = a * b; // النتيجة: 50
+System.out.println("الضرب: " + product);`},
+    {h:"القسمة (/)", p:"يُستخدم لقسمة رقم على آخر. إذا كان الطرفان من نوع <code>int</code>، فإن الناتج يكون عددًا صحيحًا (يتم إهمال الكسر العشري).",
+      code:`int a = 10;
+int b = 3;
+int quotient = a / b; // النتيجة: 3 (وليس 3.33)
+System.out.println("القسمة: " + quotient);`,
+      p2:"إذا أردنا الحصول على ناتج دقيق يشمل الكسور، نستخدم <code>double</code>:",
+      code2:`double x = 10;
+double y = 3;
+double result = x / y; // النتيجة: 3.3333
+System.out.println("القسمة الدقيقة: " + result);`},
+    {h:"باقي القسمة (%)", p:"يُستخدم لحساب الباقي بعد قسمة عددين، ويُستخدم كثيرًا لمعرفة إذا كان العدد زوجيًا أو فرديًا.",
+      code:`int a = 10;
+int b = 3;
+int remainder = a % b; // 10 ÷ 3 = 3 والباقي 1
+System.out.println("الباقي: " + remainder);`,
+      p2:"مثال آخر: التحقق إذا كان العدد زوجيًا أم فرديًا:",
+      code2:`int num = 7;
+if (num % 2 == 0) {
+  System.out.println(num + " عدد زوجي");
+} else {
+  System.out.println(num + " عدد فردي");
+}`},
+    {h:"تنبيه: القسمة على صفر", p:"إذا حاولنا القسمة على صفر باستخدام الأعداد الصحيحة (int)، تحدث جافا استثناء (ArithmeticException):",
+      code:`int a = 10;
+int b = 0;
+int result = a / b;
+// Exception in thread "main" java.lang.ArithmeticException: / by zero`,
+      p2:"أما إذا استخدمنا الأعداد العشرية (double)، فتكون النتيجة Infinity دون حدوث خطأ:",
+      code2:`double x = 10.0;
+double y = 0.0;
+double result = x / y; // النتيجة: Infinity
+System.out.println(result);`,
+      tip:"لاحظ الفرق الجوهري: القسمة على صفر بالأعداد الصحيحة تُوقف البرنامج، أما بالأعداد العشرية فتنتج Infinity فقط." },
+  ]
+},
+
+assignment:{
+  en:"Assignment Operators", title:"عوامل الإسناد",
+  intro:"عوامل الإسناد (Assignment Operators) تُستخدم في جافا لإسناد قيم للمتغيرات، سواء إسناد مباشر أو مع عملية حسابية مدمجة.",
+  sections:[
+    {h:"الإسناد البسيط (=)", p:"يقوم بإسناد قيمة محددة إلى متغيّر.", code:`int x = 10; // إسناد القيمة 10 إلى x
+System.out.println(x); // 10`},
+    {h:"الزيادة (++): زيادة قيمة المتغيّر بمقدار 1", p:"تُستخدم لزيادة قيمة المتغيّر بمقدار 1، ولها شكلان:", list:[
+      "<strong>Prefix</strong> (‎++x): تتم الزيادة أولًا ثم يُستخدم المتغيّر بقيمته الجديدة.",
+      "<strong>Postfix</strong> (x++): يُستخدم المتغيّر بقيمته الأصلية أولًا ثم تحدث الزيادة.",
+    ], code:`int a = 5;
+System.out.println(++a); // 6 — تمت الزيادة أولًا
+System.out.println(a);   // 6
+
+int b = 5;
+System.out.println(b++); // 5 — استُخدمت القيمة الأصلية أولًا
+System.out.println(b);   // 6`},
+    {h:"النقصان (--): إنقاص قيمة المتغيّر بمقدار 1", p:"يعمل بنفس منطق ‎++ لكن في اتجاه الإنقاص بمقدار 1.",
+      code:`int a = 5;
+System.out.println(a--); // 5
+System.out.println(a);   // 4
+
+int b = 5;
+System.out.println(--b); // 4
+System.out.println(b);   // 4`},
+    {h:"الإسناد مع الجمع (+=)", p:"يضيف قيمة إلى المتغيّر دون الحاجة لكتابته مرتين: <code>x += value</code> تعادل <code>x = x + value</code>.",
+      code:`int x = 10;
+x += 5; // x = x + 5
+System.out.println(x); // 15`},
+    {h:"الإسناد مع الطرح (-=)", code:`int x = 10;
+x -= 3; // x = x - 3
+System.out.println(x); // 7`},
+    {h:"الإسناد مع القسمة (/=)", code:`int x = 10;
+x /= 2; // x = x / 2
+System.out.println(x); // 5`},
+    {h:"الإسناد مع باقي القسمة (%=)", code:`int x = 10;
+x %= 3; // x = x % 3
+System.out.println(x); // 1`,
+      tip:"هذه العوامل تجعل الكود أكثر اختصارًا وقراءة، وتُستخدم كثيرًا داخل الحلقات (Loops) مثل for و while، تمامًا مثل ‎++ و --." },
+  ]
+},
+
+logical:{
+  en:"Logical Operators", title:"العوامل المنطقية",
+  intro:"عوامل منطقية (Logical Operators) تُستخدم لدمج أو نفي أكثر من شرط في جافا.",
+  sections:[
+    {h:"AND (&&)", p:"تُعيد <code>true</code> فقط إذا كان الشرطان صحيحين معًا، وإلا تُعيد <code>false</code>.",
+      code:`int age = 25;
+boolean hasLicense = true;
+
+if (age >= 18 && hasLicense) {
+  System.out.println("مسموح بالقيادة.");
+} else {
+  System.out.println("غير مسموح بالقيادة.");
+}`, out:"مسموح بالقيادة."},
+    {h:"OR (||)", p:"تُعيد <code>true</code> إذا تحقق أحد الشرطين على الأقل، وتُعيد <code>false</code> فقط إذا فشلا معًا.",
+      code:`boolean isWeekend = true;
+boolean isHoliday = false;
+
+if (isWeekend || isHoliday) {
+  System.out.println("استمتع بيومك!");
+} else {
+  System.out.println("يوم عمل عادي.");
+}`, out:"استمتع بيومك!"},
+    {h:"NOT (!)", p:"تعكس قيمة الشرط: تحوّل <code>true</code> إلى <code>false</code> والعكس.",
+      code:`boolean isRaining = false;
+
+if (!isRaining) {
+  System.out.println("يمكنك الخروج.");
+} else {
+  System.out.println("الجو ممطر.");
+}`, out:"يمكنك الخروج."},
+    {h:"دمج عدة عوامل منطقية", p:"مثال عملي: التحقق من بيانات تسجيل الدخول باستخدام AND:",
+      code:`String username = "admin";
+String password = "1234";
+
+if (username.equals("admin") && password.equals("1234")) {
+  System.out.println("تسجيل الدخول ناجح!");
+} else {
+  System.out.println("اسم المستخدم أو كلمة المرور غير صحيحة.");
+}`, out:"تسجيل الدخول ناجح!"},
+  ]
+},
+
+conditions:{
+  en:"Conditional Statements", title:"الجمل الشرطية",
+  intro:"تُستخدم الجمل الشرطية (Conditional Statements) في جافا لتنفيذ جزء معيّن من الكود بناءً على تحقق شرط معيّن.",
+  sections:[
+    {h:"if", p:"يُنفَّذ الكود بداخله فقط إذا كان الشرط <code>true</code>.",
+      code:`int age = 18;
+if (age >= 18) {
+  System.out.println("مسموح بالدخول!");
+}`, out:"مسموح بالدخول!",
+      tip:"إذا كان الشرط false، لا يُنفَّذ أي كود بداخل الجملة." },
+    {h:"if - else", p:"إذا أردنا تنفيذ كود آخر عندما لا يتحقق الشرط، نستخدم <code>else</code>.",
+      code:`int age = 16;
+if (age >= 18) {
+  System.out.println("مسموح بالدخول!");
+} else {
+  System.out.println("غير مسموح بالدخول.");
+}`, out:"غير مسموح بالدخول."},
+  ]
+},
+
+elseif:{
+  en:"if - else if - else", title:"جملة else if",
+  intro:"إذا كان لدينا أكثر من شرط واحد يجب فحصه بالترتيب، نستخدم سلسلة <code>if - else if - else</code>.",
+  sections:[
+    {h:"البنية العامة", code:`if (الشرط 1) {
+  // يُنفَّذ إذا تحقق الشرط الأول
+} else if (الشرط 2) {
+  // يُنفَّذ إذا فشل الشرط الأول وتحقق الثاني
+} else {
+  // يُنفَّذ إذا فشلت كل الشروط السابقة
+}`},
+    {h:"مثال: تقييم الدرجات", code:`int grade = 85;
+
+if (grade >= 90) {
+  System.out.println("ممتاز!");
+} else if (grade >= 80) {
+  System.out.println("جيد جدًا!");
+} else if (grade >= 70) {
+  System.out.println("جيد.");
+} else {
+  System.out.println("يحتاج إلى مزيد من الجهد.");
+}`, out:"جيد جدًا!",
+      tip:"جافا تفحص الشروط بالترتيب من أعلى لأسفل، وبمجرد تحقق أول شرط، تتوقف عن فحص الباقي." },
+  ]
+},
+
+nestedif:{
+  en:"Nested if", title:"الشرط المتداخل (Nested if)",
+  intro:"الشرط المتداخل (Nested if) هو استخدام جملة <code>if</code> بداخل جملة <code>if</code> أخرى. يُستخدم عندما نريد فحص شرط ثانٍ فقط في حال تحقق الشرط الأول.",
+  sections:[
+    {h:"البنية العامة", code:`if (الشرط 1) {
+  // يُنفَّذ الجزء الأول إذا تحقق الشرط الأول
+  if (الشرط 2) {
+    // يُنفَّذ الجزء الثاني إذا تحقق الشرط الثاني أيضًا
+  }
+}`},
+    {h:"مثال: تسجيل الدخول", p:"يتم فحص كلمة المرور فقط إذا كان اسم المستخدم صحيحًا أولًا:",
+      code:`String username = "admin";
+String password = "1234";
+
+if (username.equals("admin")) {
+  if (password.equals("1234")) {
+    System.out.println("تسجيل الدخول ناجح!");
+  } else {
+    System.out.println("كلمة المرور غير صحيحة.");
+  }
+} else {
+  System.out.println("اسم المستخدم غير موجود.");
+}`, out:"تسجيل الدخول ناجح!"},
+  ]
+},
+
+loops:{
+  en:"Loops", title:"حلقات التكرار",
+  intro:"حلقات التكرار (Loops) في جافا تسمح بتنفيذ جزء من الكود عدة مرات دون الحاجة لتكرار كتابته يدويًا.",
+  sections:[
+    {h:"for loop", p:"تُستخدم عندما يكون عدد مرات التكرار معروفًا مسبقًا.",
+      code:`for (initialization; condition; update) {
+  // الكود المراد تكراره
+}`,
+      list:[
+        "<strong>initialization</strong>: تهيئة المتغيّر قبل بدء الحلقة.",
+        "<strong>condition</strong>: الشرط الذي يجب أن يظل صحيحًا لاستمرار التكرار.",
+        "<strong>update</strong>: تحديث قيمة المتغيّر بعد كل تكرار (زيادة أو نقصان عادةً).",
+      ]},
+    {h:"مثال: طباعة الأرقام من 1 إلى 5", code:`public class Main {
+  public static void main(String[] args) {
+    for (int i = 1; i <= 5; i++) {
+      System.out.println("العدد: " + i);
+    }
+  }
+}`, out:"العدد: 1\nالعدد: 2\nالعدد: 3\nالعدد: 4\nالعدد: 5",
+      tip:"المتغيّر i بدأ من 1، واستمر التكرار حتى وصل إلى 5." },
+    {h:"while loop", p:"تُستخدم عندما لا يكون عدد مرات التكرار معروفًا مسبقًا بدقة، ويعتمد التكرار على استمرار تحقق الشرط.",
+      code:`while (condition) {
+  // الكود المراد تكراره
+}`},
+    {h:"مثال: نفس الطباعة باستخدام while", code:`public class Main {
+  public static void main(String[] args) {
+    int i = 1;
+    while (i <= 5) {
+      System.out.println("العدد: " + i);
+      i++; // تحديث المتغيّر داخل الحلقة
+    }
+  }
+}`, out:"العدد: 1\nالعدد: 2\nالعدد: 3\nالعدد: 4\nالعدد: 5",
+      tip:"بدأت الحلقة من i = 1 واستمرت طالما أن i أصغر من أو يساوي 5." },
+  ]
+},
+
+nestedloops:{
+  en:"Nested Loops", title:"الحلقات المتداخلة",
+  intro:"الحلقة المتداخلة (Nested Loop) هي وجود حلقة تكرار بداخل حلقة تكرار أخرى، بحيث تُنفَّذ الحلقة الداخلية بالكامل في كل مرة تكرار واحدة من الحلقة الخارجية. تُستخدم كثيرًا في التعامل مع المصفوفات ثنائية الأبعاد.",
+  sections:[
+    {h:"البنية العامة", code:`for (int i = 0; i < عدد_التكرارات_الخارجية; i++) {
+  for (int j = 0; j < عدد_التكرارات_الداخلية; j++) {
+    // الكود المراد تنفيذه داخل الحلقتين
+  }
+}`},
+    {h:"مثال: جدول الضرب", code:`public class Main {
+  public static void main(String[] args) {
+    for (int i = 1; i <= 5; i++) {      // الحلقة الخارجية (الصفوف)
+      for (int j = 1; j <= 5; j++) {    // الحلقة الداخلية (الأعمدة)
+        System.out.print((i * j) + "\\t");
+      }
+      System.out.println(); // الانتقال لسطر جديد بعد كل صف
+    }
+  }
+}`,
+      list:[
+        "الحلقة الخارجية <code>i</code> تمثّل الصفوف (Rows).",
+        "الحلقة الداخلية <code>j</code> تمثّل الأعمدة (Columns).",
+        "يتم حساب <code>i * j</code> وطباعته في كل خانة من الجدول.",
+      ]},
+  ]
+},
+
+breakcontinue:{
+  en:"Break & Continue", title:"جملتا break و continue",
+  intro:"جملتا <code>break</code> و <code>continue</code> تُستخدمان للتحكم في سير حلقات التكرار (for, while, do-while).",
+  sections:[
+    {h:"break", p:"تُستخدم لإنهاء الحلقة (Loop) بشكل فوري والخروج منها كليًا، بمجرد تحقق شرط معيّن.",
+      code:`public class Main {
+  public static void main(String[] args) {
+    for (int i = 1; i <= 10; i++) {
+      if (i == 5) {
+        System.out.println("توقفنا عند 5، وسيتم إنهاء الحلقة.");
+        break; // خروج فوري من الحلقة
+      }
+      System.out.println("العدد: " + i);
+    }
+    System.out.println("انتهت الحلقة.");
+  }
+}`, out:"العدد: 1\nالعدد: 2\nالعدد: 3\nالعدد: 4\nتوقفنا عند 5، وسيتم إنهاء الحلقة.\nانتهت الحلقة.",
+      tip:"بمجرد أن أصبح i يساوي 5، خرجنا من الحلقة نهائيًا عبر break، ولم تُطبع الأعداد 5 إلى 10." },
+    {h:"continue", p:"تُستخدم لتخطي التكرار الحالي فقط والانتقال مباشرة إلى التكرار التالي، دون إنهاء الحلقة بالكامل.",
+      code:`public class Main {
+  public static void main(String[] args) {
+    for (int i = 1; i <= 10; i++) {
+      if (i == 5) {
+        System.out.println("تخطينا الرقم 5.");
+        continue; // تخطي هذا التكرار والانتقال للتالي
+      }
+      System.out.println("العدد: " + i);
+    }
+  }
+}`, out:"العدد: 1\nالعدد: 2\nالعدد: 3\nالعدد: 4\nتخطينا الرقم 5.\nالعدد: 6\nالعدد: 7\nالعدد: 8\nالعدد: 9\nالعدد: 10",
+      tip:"عندما كان i يساوي 5، تم تخطي طباعته فقط بواسطة continue، واستمرت الحلقة عاديًا حتى نهايتها." },
+  ]
+},
+
+arrays:{
+  en:"Arrays Deep Dive", title:"التعمّق في المصفوفات",
+  intro:"المصفوفة (Array) هي بنية بيانات تُستخدم لتخزين مجموعة من القيم من نفس النوع، وتُخزَّن هذه القيم في مكان واحد متجاور في الذاكرة، مما يسهّل الوصول إليها والتعامل معها.",
+  sections:[
+    {h:"إنشاء مصفوفة بقيم مباشرة", code:`int[] numbers = {10, 20, 30, 40, 50}; // مصفوفة تحتوي على 5 عناصر
+System.out.println(numbers[0]); // العنصر الأول: 10`},
+    {h:"طرق أخرى لإنشاء مصفوفة", code:`// الطريقة الأولى: تعريف القيم مباشرة
+int[] numbers = {1, 2, 3, 4, 5};
+
+// الطريقة الثانية: إنشاء مصفوفة فارغة ثم ملؤها
+int[] numbers2 = new int[5]; // مصفوفة من 5 عناصر، كلها 0 مبدئيًا
+numbers2[0] = 10;
+numbers2[1] = 20;`},
+    {h:"الوصول إلى عناصر المصفوفة (Index)", p:"يتم الوصول إلى عناصر المصفوفة باستخدام الفهرس (Index)، والذي يبدأ دائمًا من 0.",
+      code:`int[] numbers = {10, 20, 30, 40, 50};
+System.out.println(numbers[2]); // العنصر الثالث: 30`},
+    {h:"تعديل عناصر المصفوفة", code:`int[] numbers = {10, 20, 30};
+numbers[1] = 50; // تغيير العنصر في الفهرس 1 من 20 إلى 50
+System.out.println(numbers[1]); // 50`},
+    {h:"طول المصفوفة (length)", code:`int[] numbers = {10, 20, 30, 40, 50};
+System.out.println(numbers.length); // 5`},
+    {h:"التكرار على عناصر المصفوفة", p:"باستخدام <code>for</code> للمرور على كل عناصر المصفوفة:",
+      code:`int[] numbers = {10, 20, 30, 40, 50};
+for (int i = 0; i < numbers.length; i++) {
+  System.out.println(numbers[i]); // طباعة كل عنصر
+}`},
+  ]
+},
+
+functions:{
+  en:"Functions", title:"الدوال (Functions)",
+  intro:"الدوال (Functions) هي أجزاء من الكود قابلة لإعادة الاستخدام، تقوم بتنفيذ مهمة محددة، وتساعد في تنظيم الكود وتقليل التكرار.",
+  sections:[
+    {h:"البنية العامة لتعريف دالة", code:`returnType functionName(parameters) {
+  // كود الدالة
+  return value; // (إذا كانت الدالة تُعيد قيمة)
+}`},
+    {h:"شرح كل جزء", list:[
+      "<strong>returnType</strong>: نوع القيمة التي تُعيدها الدالة (int, boolean, void, إلخ). في حالة <code>void</code> فالدالة لا تُعيد أي قيمة.",
+      "<strong>functionName</strong>: اسم الدالة، ويجب أن يكون واضحًا ويعبّر عن وظيفتها.",
+      "<strong>parameters</strong>: القيم التي يتم تمريرها إلى الدالة (اختيارية).",
+      "<strong>return value</strong>: القيمة التي تُعيدها الدالة، وتُستخدم فقط إذا لم يكن نوع الإرجاع void.",
+    ]},
+  ]
+},
+
+constructor:{
+  en:"Constructor", title:"البانِي (Constructor)",
+  intro:"الباني (Constructor) هو دالة خاصة تُستخدم لإنشاء كائن (Object) جديد من كلاس معيّن. يتم استدعاؤه تلقائيًا عند إنشاء الكائن باستخدام <code>new</code>، وليس له أي نوع إرجاع (ولا حتى void).",
+  sections:[
+    {h:"البنية العامة", code:`class ClassName {
+  // Constructor
+  ClassName() {
+    // كود التهيئة
+  }
+}`, tip:"إذا لم يُعرَّف أي Constructor داخل الكلاس، فإن جافا تنشئ Constructor افتراضي فارغ تلقائيًا."},
+    {h:"مثال: Constructor بدون معاملات", code:`class Car {
+  // Constructor بدون معاملات (افتراضي)
+  Car() {
+    System.out.println("تم إنشاء سيارة جديدة من الكلاس Car");
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    Car myCar = new Car();
+  }
+}`, out:"تم إنشاء سيارة جديدة من الكلاس Car",
+      tip:"بمجرد إنشاء myCar، تم استدعاء الـ Constructor تلقائيًا وتنفيذ الكود بداخله."},
+    {h:"Constructor مع معاملات (Parameters)", p:"يمكن تمرير قيم إلى الـ Constructor عند إنشاء الكائن، لتُستخدم في تهيئة خصائصه مباشرة.",
+      code:`class Car {
+  String brand;
+  int year;
+
+  // Constructor يستقبل معاملات
+  Car(String carBrand, int carYear) {
+    brand = carBrand;
+    year = carYear;
+  }
+
+  void displayInfo() {
+    System.out.println("الماركة: " + brand + ", السنة: " + year);
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    Car myCar = new Car("Toyota", 2022); // تمرير القيم عند الإنشاء
+    myCar.displayInfo();
+  }
+}`, out:"الماركة: Toyota, السنة: 2022"},
+  ]
+},
+
+encapsulation:{
+  en:"Encapsulation", title:"التغليف (Encapsulation)",
+  intro:"التغليف (Encapsulation) هو أحد مبادئ البرمجة الكائنية (OOP)، ويقوم على إخفاء تفاصيل البيانات داخل الكائن (Object)، وعدم السماح بالوصول إليها مباشرة إلا من خلال دوال محددة (getter و setter).",
+  sections:[
+    {h:"أهداف التغليف", list:[
+      "حماية البيانات من التعديل المباشر وغير الآمن.",
+      "التحكم الكامل في كيفية قراءة أو تعديل البيانات.",
+      "ضمان أن الكود أكثر تنظيمًا وأمانًا.",
+    ]},
+    {h:"كيف يتم تطبيق Encapsulation؟", list:[
+      "جعل المتغيرات (Variables) خاصة (Private) بحيث لا يمكن الوصول إليها مباشرة من خارج الكلاس.",
+      "استخدام getter و setter للقراءة والتعديل بشكل آمن.",
+      "استخدام constructors كطريقة رئيسية لإدخال القيم الأولية عند إنشاء الكائن.",
+    ]},
+    {h:"مثال كامل: كلاس Person", code:`class Person {
+  // المتغيرات private
+  private String name;
+  private int age;
+
+  public Person(String name, int age) {
+    this.name = name;
+    setAge(age); // استخدام setter حتى داخل الـ Constructor
+  }
+
+  // Getter لاسم الشخص
+  public String getName() {
+    return name;
+  }
+
+  // Setter لتعديل الاسم
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  // Getter لعمر الشخص
+  public int getAge() {
+    return age;
+  }
+
+  // Setter مع التحقق من شرط قبل التعديل
+  public void setAge(int age) {
+    if (age > 0) {
+      this.age = age;
+    } else {
+      System.out.println("خطأ! العمر يجب أن يكون رقمًا موجبًا.");
+    }
+  }
+}`},
+    {h:"ملاحظات على الكود", list:[
+      "متغيرات <code>name</code> و <code>age</code> خاصة (Private) ولا يمكن الوصول إليها مباشرة من خارج الكلاس.",
+      "دالة getter تُعيد القيمة، ودالة setter تُعدّل القيمة بشكل آمن.",
+      "دالة <code>setAge</code> تتحقق من شرط (أن يكون العمر أكبر من 0) قبل تنفيذ التعديل.",
+    ]},
+    {h:"استخدام الكلاس", code:`public class Main {
+  public static void main(String[] args) {
+    Person p1 = new Person("علي", 25);
+
+    // القراءة باستخدام getters
+    System.out.println("الاسم: " + p1.getName());
+    System.out.println("العمر: " + p1.getAge());
+
+    // التعديل باستخدام setters
+    p1.setName("أحمد");
+    p1.setAge(30);
+    System.out.println("الاسم بعد التعديل: " + p1.getName());
+    System.out.println("العمر بعد التعديل: " + p1.getAge());
+
+    // محاولة إدخال قيمة غير صحيحة
+    p1.setAge(-5); // سيتم رفضها وطباعة رسالة الخطأ
+  }
+}`, out:"الاسم: علي\nالعمر: 25\nالاسم بعد التعديل: أحمد\nالعمر بعد التعديل: 30\nخطأ! العمر يجب أن يكون رقمًا موجبًا."},
+  ]
+},
+
+inheritance:{
+  en:"Inheritance", title:"الوراثة (Inheritance)",
+  intro:"الوراثة (Inheritance) هي مبدأ يسمح بإنشاء كلاس جديد (الفرعي - Subclass) يرث خصائص وسلوك كلاس آخر (الأساسي - Superclass)، مما يتيح إعادة استخدام الكود دون تكراره.",
+  sections:[
+    {h:"فكرة الوراثة", p:"الكلاس الفرعي يرث الخصائص (Properties) والدوال (Methods) من الكلاس الأساسي، ويمكنه أيضًا إضافة خصائص جديدة أو تعديل الخصائص الموروثة."},
+    {h:"فوائد الوراثة", list:[
+      "<strong>إعادة استخدام الكود</strong>: بدلًا من تكرار نفس الكود، يتم كتابته مرة واحدة في الكلاس الأساسي.",
+      "<strong>التنظيم</strong>: يسهّل تنظيم العلاقات بين الكلاسات.",
+      "<strong>المرونة</strong>: أي تعديل في الكلاس الأساسي ينعكس تلقائيًا على الكلاسات الفرعية.",
+    ]},
+    {h:"استخدام الوراثة في جافا: extends", p:"لإنشاء كلاس يرث من كلاس آخر، نستخدم الكلمة المفتاحية <code>extends</code>.",
+      code:`// الكلاس الأساسي (Superclass)
+class Vehicle {
+  String brand = "Toyota"; // خاصية موروثة
+
+  public void honk() {
+    System.out.println("Beep Beep 🚗");
+  }
+}
+
+// الكلاس الفرعي (Subclass) يرث من Vehicle
+class Car extends Vehicle {
+  int wheels = 4; // خاصية إضافية خاصة بـ Car
+
+  public void displayInfo() {
+    System.out.println("Brand: " + brand); // خاصية موروثة من Vehicle
+    System.out.println("Wheels: " + wheels);
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    Car myCar = new Car();
+    myCar.displayInfo(); // عرض معلومات السيارة
+    myCar.honk();        // استدعاء دالة موروثة من Vehicle
+  }
+}`, out:"Brand: Toyota\nWheels: 4\nBeep Beep 🚗",
+      tip:"كلاس Car ورث كلًا من brand والدالة honk() من Vehicle، وأضاف عليها خاصية wheels ودالة displayInfo() الخاصة به."},
+  ]
+},
+
+polymorphism:{
+  en:"Polymorphism", title:"تعدد الأشكال (Polymorphism)",
+  intro:"تعدد الأشكال (Polymorphism) هو قدرة الكائن على التصرف بأكثر من شكل، وهو أحد المبادئ الأساسية للبرمجة الكائنية (OOP). في جافا يظهر بصورتين رئيسيتين.",
+  sections:[
+    {h:"Method Overloading (التحميل الزائد)", p:"تعريف أكثر من دالة (Method) بنفس الاسم لكن باختلاف المعاملات (Parameters)، سواء في العدد أو نوع البيانات.",
+      code:`class MathOperations {
+  // دالة جمع عددين
+  int sum(int a, int b) {
+    return a + b;
+  }
+
+  // دالة جمع ثلاثة أعداد
+  int sum(int a, int b, int c) {
+    return a + b + c;
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    MathOperations math = new MathOperations();
+    System.out.println(math.sum(5, 10));     // النسخة الأولى
+    System.out.println(math.sum(5, 10, 15));  // النسخة الثانية
+  }
+}`, out:"15\n30",
+      tip:"جافا تختار النسخة المناسبة من الدالة تلقائيًا بناءً على عدد المعاملات الممرَّرة."},
+    {h:"Method Overriding (إعادة التعريف)", p:"إعادة تعريف دالة موجودة بالفعل في الكلاس الأساسي داخل الكلاس الفرعي، مع الحفاظ على نفس الاسم والمعاملات (Parameters). تُستخدم لتخصيص سلوك الدالة الموروثة في الكلاس الفرعي.",
+      code:`class Animal {
+  void makeSound() {
+    System.out.println("صوت الحيوان 🐾");
+  }
+}
+
+class Dog extends Animal {
+  @Override
+  void makeSound() {
+    System.out.println("نباح الكلب 🐶");
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    Animal myDog = new Dog();
+    myDog.makeSound(); // استدعاء النسخة المُعاد تعريفها في Dog
+  }
+}`, out:"نباح الكلب 🐶"},
+  ]
+},
+
+static:{
+  en:"Static Keyword", title:"الكلمة المفتاحية static",
+  intro:"تُستخدم الكلمة المفتاحية <code>static</code> لتعريف الخصائص (Properties) أو الدوال (Methods) على مستوى الكلاس نفسه وليس على مستوى الكائنات (Objects)، مما يسمح بالوصول إليها دون الحاجة لإنشاء كائن (Object) من الكلاس.",
+  sections:[
+    {h:"مثال: خاصية static", code:`class Car {
+  static int wheels = 4; // خاصية مشتركة لكل السيارات
+}
+
+public class Main {
+  public static void main(String[] args) {
+    System.out.println("عدد العجلات: " + Car.wheels); // الوصول المباشر
+  }
+}`, out:"عدد العجلات: 4",
+      tip:"تم الوصول إلى wheels عبر اسم الكلاس Car مباشرة، دون إنشاء (new) أي كائن منه."},
+    {h:"مثال: دالة static", code:`class MathUtils {
+  static int square(int num) {
+    return num * num;
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    System.out.println("مربع 5: " + MathUtils.square(5)); // الوصول المباشر
+  }
+}`, out:"مربع 5: 25",
+      tip:"تم استدعاء الدالة square() مباشرة عبر اسم الكلاس MathUtils، دون الحاجة لإنشاء كائن منه."},
+  ]
+},
+
+carproject:{
+  en:"Car Agency Project (OOP)", title:"مشروع وكالة السيارات بالبرمجة الكائنية",
+  intro:"البرمجة الكائنية (Object-Oriented Programming - OOP) هي نموذج برمجي يعتمد على تمثيل البيانات (الخصائص) والسلوك (الدوال) في وحدات تُسمى كائنات (Objects)، مبنية من قوالب تُسمى كلاسات (Classes).",
+  sections:[
+    {h:"الكائنات (Objects)", p:"الكائن (Object) هو نسخة فعلية تم إنشاؤها من الكلاس (Class). في المثال التالي، myCar و otherCar هما كائنان (Objects) من الكلاس Car:",
+      code:`Car myCar = new Car("Mercedes", 320, 50000);
+Car otherCar = new Car("BMW", 250, 30000);`,
+      p2:"كل كائن من الاثنين يمتلك نسخته الخاصة من الخصائص: الاسم (name)، السرعة (speed)، والسعر (price)."},
+    {h:"الكلاسات (Classes)", p:"الكلاس (Class) هو المخطط (Blueprint) الذي يُستخدم لبناء الكائنات (Objects). كلاس Car يحتوي على الخصائص (Attributes) والدوال (Methods) الخاصة بالسيارة:",
+      code:`class Car {
+  private String name;
+  private int speed;
+  private double price;
+
+  // Constructor
+  public Car(String name, int speed, double price) {
+    this.name = name;
+    this.speed = speed;
+    this.price = price;
+  }
+
+  // Getter method
+  public String getName() {
+    return name;
+  }
+}`},
+    {h:"دور الكلاس Car", list:[
+      "يحتوي على الخصائص الخاصة (Private Attributes)، بحيث لا يمكن الوصول إليها مباشرة من خارج الكلاس.",
+      "يحتوي على Constructor لإنشاء الكائنات وتهيئة خصائصها مباشرة عند الإنشاء.",
+      "يحتوي على دالة getName() لإرجاع اسم السيارة بطريقة آمنة ومتحكَّم بها.",
+    ], tip:"هذا المثال يجمع بين مبادئ التغليف (Encapsulation) والباني (Constructor) التي شُرحت في المواضيع الأخرى، ضمن سياق مشروع عملي واحد."},
+  ]
+},
+
+};
+
+/* ===================== RENDER ===================== */
+const ORDER = CATEGORIES.flatMap(c => c.items);
+let current = ORDER[0];
+let progress = new Set();
+
+function esc(s){ return s; } // content already trusted/authored
+
+function codeHTML(code){
+  return code
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/(\/\/.*)/g, '<span class="cm">$1</span>')
+    .replace(/\b(class|public|private|static|void|new|if|else|for|while|return|extends|int|double|float|long|short|byte|char|boolean|String|this|break|continue)\b/g, '<span class="kw">$1</span>')
+    .replace(/("(?:[^"\\]|\\.)*")/g, '<span class="st">$1</span>');
+}
+
+function renderNav(){
+  const host = document.getElementById('navHost');
+  let n = 0;
+  host.innerHTML = CATEGORIES.map(cat => {
+    const items = cat.items.map(id => {
+      n++;
+      const t = T[id];
+      const active = id === current ? 'active' : '';
+      const done = progress.has(id) ? 'done' : '';
+      return `<div class="nav-item ${active} ${done}" data-id="${id}">
+        <span class="dot"></span>
+        <span class="label">${t.title}</span>
+        <span class="num">${String(n).padStart(2,'0')}</span>
+      </div>`;
+    }).join('');
+    return `<div class="nav-group">
+      <div class="nav-group-title">${cat.title}</div>
+      ${items}
+    </div>`;
+  }).join('');
+
+  host.querySelectorAll('.nav-item').forEach(el=>{
+    el.addEventListener('click', ()=> selectTopic(el.dataset.id));
+  });
+
+  const pct = Math.round((progress.size / ORDER.length) * 100);
+  document.getElementById('altPct').textContent = pct + '%';
+  document.getElementById('altFill').style.width = pct + '%';
+}
+
+function sectionHTML(s){
+  let html = `<div class="section">`;
+  if(s.h) html += `<h2>${s.h}</h2>`;
+  if(s.p) html += `<p>${s.p}</p>`;
+  if(s.list) html += `<ul>${s.list.map(li=>`<li>${li}</li>`).join('')}</ul>`;
+  if(s.table){
+    const [head, ...rows] = s.table;
+    html += `<table class="dtypes"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${
+      rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')
+    }</tbody></table>`;
+  }
+  if(s.code) html += `<pre class="code">${codeHTML(s.code)}</pre>`;
+  if(s.out) html += `<div class="out-label">OUTPUT ▸</div><div class="out-box">${s.out}</div>`;
+  if(s.p2) html += `<p>${s.p2}</p>`;
+  if(s.code2) html += `<pre class="code">${codeHTML(s.code2)}</pre>`;
+  if(s.tip) html += `<div class="tip"><span class="ic">🦅</span><span>${s.tip}</span></div>`;
+  html += `</div>`;
+  return html;
+}
+
+function renderTopic(id){
+  const t = T[id];
+  const host = document.getElementById('topicHost');
+  host.innerHTML = `
+    <h1>${t.title} <span class="en">${t.en}</span></h1>
+    <div class="intro">${t.intro}</div>
+    ${t.sections.map(sectionHTML).join('')}
+    <div class="footer-nav">
+      <div class="nav-btn" id="prevBtn"><span class="arrow">→ السابق</span><span class="name" id="prevName"></span></div>
+      <div class="nav-btn" id="nextBtn" style="text-align:left"><span class="arrow">التالي ←</span><span class="name" id="nextName"></span></div>
+    </div>
+  `;
+  document.getElementById('crumb').innerHTML = `EAGLE.JAVA / <b>${t.title}</b>`;
+
+  const idx = ORDER.indexOf(id);
+  const prevId = ORDER[(idx - 1 + ORDER.length) % ORDER.length];
+  const nextId = ORDER[(idx + 1) % ORDER.length];
+  document.getElementById('prevName').textContent = T[prevId].title;
+  document.getElementById('nextName').textContent = T[nextId].title;
+  document.getElementById('prevBtn').addEventListener('click', ()=> selectTopic(prevId));
+  document.getElementById('nextBtn').addEventListener('click', ()=> selectTopic(nextId));
+
+  const markBtn = document.getElementById('markBtn');
+  updateMarkBtn(id);
+  markBtn.onclick = ()=> toggleProgress(id);
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function updateMarkBtn(id){
+  const markBtn = document.getElementById('markBtn');
+  if(progress.has(id)){
+    markBtn.textContent = '☑ تم فهم هذا الموضوع';
+    markBtn.classList.add('done');
+  } else {
+    markBtn.textContent = '☐ وضع علامة "فهمتها"';
+    markBtn.classList.remove('done');
+  }
+}
+
+async function toggleProgress(id){
+  if(progress.has(id)) progress.delete(id); else progress.add(id);
+  updateMarkBtn(id);
+  renderNav();
+  try{
+    await window.storage.set('eagle-java-progress', JSON.stringify(Array.from(progress)), false);
+  }catch(e){ /* best effort, ignore */ }
+}
+
+function selectTopic(id){
+  current = id;
+  renderNav();
+  renderTopic(id);
+}
+
+async function loadProgress(){
+  try{
+    const res = await window.storage.get('eagle-java-progress', false);
+    if(res && res.value){
+      const arr = JSON.parse(res.value);
+      progress = new Set(arr.filter(id => T[id]));
+    }
+  }catch(e){ /* no saved progress yet */ }
+  renderNav();
+  renderTopic(current);
+}
+
+loadProgress();
+</script>
+</body>
+</html>
